@@ -1,37 +1,53 @@
 <?php
-//require_once plugin_dir_path(__FILE__) .'config.php';
-//require plugin_dir_path(__FILE__) . 'lib.php';
+$dir = plugin_dir_path(__FILE__) . '/databases/';
+$scanResult = scandir($dir);
 
-/*header("Content-Type:application/json");
-// get the HTTP method, path and body of the request
-$method = $_SERVER['REQUEST_METHOD'];
-$request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
-#$input = file_get_contents('php://input');
-$input = json_decode(file_get_contents('php://input'));*/
+/*print('<strong>Available database.s in the system</strong></BR>');
+foreach ($scanResult as $index => &$file)
+{
+	if(!is_dir($dir.$file))
+  	    print('<pre><strong>'.$file . '</strong></pre></BR>');
+}*/
 
-//session_start();
 
-//print('judoShiaiTemplateFile='.plugin_dir_path(__FILE__) .$judoShiaiTemplateFile.'</ br>');
 $judoShiaiTemplateFile = get_option('judoshiai_option_name');
-//$dbconn = sqlite3_open($judoShiaiTemplateFile);
-$dbconn = new PDO('sqlite:'.plugin_dir_path(__FILE__) .$judoShiaiTemplateFile);
+
+
+$dbconn = dbConnectionSqlite(plugin_dir_path(__FILE__) . '/databases/'. $judoShiaiTemplateFile);
+
 
 if ($dbconn)
 {
+
 	$row = sqlite_getInfo($dbconn);
-	$categories = sqlite_getCategories($dbconn);
-	$competitors = sqlite_getCompetitors($dbconn, 'christophe@van-beneden.com');
-	
+	//$categories = sqlite_getCategories($dbconn);
+	//$competitors = sqlite_getCompetitors($dbconn, 'christophe@van-beneden.com');
+	if ($row)
+	print('
+		<div class="wrap">
+			<h1 style="color:green">Competition name: '.$row->Competition[0].'</br>Date: '.$row->Date[0].'</br>Place: '.$row->Place[0].'</h1>
+			<p></p>
+		</div> 
+	');
+    else print('
+		<div class="wrap">
+			<h1 style="color:red">NO SUCH TOURNAMENT FILE ...</h1>
+			<p></p>
+		</div> 
+	');
 }
 else 
-	print ('Connection to database failed!\n');
+	print ('<pre><p style="color:red">Connection to database failed!</p></pre>');
 
-print('
-	<div class="wrap">
-		<h1>'.$row->Competition[0].' | '.$row->Date[0].' | '.$row->Place[0].'</h1>
-		<p></p>
-	</div> 
-');
+/*
+<select name="saison_sel" id="saison_sel">
+<option <?php if($saison_precedente == $selected){echo selected="selected";} ?> value="<?php echo $saison_precedente; ?>"><?php echo $saison_precedente; ?></option>
+<option <?php if($saison_encours == $selected || empty($selected)){echo selected="selected";} ?> value="<?php echo $saison_encours; ?>"><?php echo $saison_encours; ?></option>
+<option <?php if($saison_suivante == $selected){echo selected="selected";} ?> value="<?php echo $saison_suivante; ?>"><?php echo $saison_suivante; ?></option>
+</select>
+
+<input type="text" id="judoshiai_option_name" name="judoshiai_option_name" value="<?php echo get_option('judoshiai_option_name'); ?>" />
+*/
 ?>
   <div>
   <?php screen_icon(); ?>
@@ -41,14 +57,71 @@ print('
   <p>Set your database:</p>
   <table>
   <tr valign="top">
-  <th scope="row"><label for="judoshiai_option_name">Database filename (have to be uploaded by hand) [*.shi]: </label></th>
-  <td><input type="text" id="judoshiai_option_name" name="judoshiai_option_name" value="<?php echo get_option('judoshiai_option_name'); ?>" /></td>
+  <th scope="row"><label for="judoshiai_option_name">Database filename [*.shi]: </label></th>
+  <td>
+	<select name="judoshiai_option_name" id="judoshiai_option_name">
+		<?php
+		  foreach ($scanResult as $index => &$file){
+				if(!is_dir($dir.$file))
+					if ($file == get_option('judoshiai_option_name'))
+						print('<option selected="selected">'.$file . '</option>');
+					else 
+						print('<option>'.$file . '</option>');			
+			}	
+
+		?>
+	</select>
+  
+  </td>
   </tr>
   </table>
   <?php  submit_button(); ?>
   </form>
   </div>
+  <div>
+  <h1>Upload Your Database File</h1>
 <?php
+if(isset($_POST['but_submit'])){
+
+  //print_r($_FILES['file']);
+  if($_FILES['file']['name'] != ''){
+    $uploadedfile = $_FILES['file'];
+	$uploadedfilename = $_FILES['file']['tmp_name'];
+	$uploadedtargetfilename = $_FILES['file']['name'];
+	$path_parts = pathinfo(plugin_dir_path(__FILE__) . 'databases/'.$uploadedtargetfilename);
+	
+	if ($path_parts['extension'] == 'shi'){	
+		$upload_overrides = array( 'test_form' => false );
+		//add_filter('upload_dir', plugin_dir_path(__FILE__) . '/databases/');
+		$movefile = move_uploaded_file( $uploadedfilename, plugin_dir_path(__FILE__) . 'databases/'.$uploadedtargetfilename );
+		//remove_filter('upload_dir', plugin_dir_path(__FILE__) . '/databases/');
+		$imageurl = "";
+		if ( $movefile ) {
+		   $imageurl = plugin_dir_path(__FILE__) . 'databases/'.$uploadedtargetfilename;
+		   echo "url : ".$imageurl;
+		   } 
+		}
+		else print('<p style="color:red">[ERROR]</p><strong> Extension not valid! It must be a [*.shi] file</strong>');
+	}
+
+}
+?>
+<!-- Form -->
+<form method='post' action='' name='myform' enctype='multipart/form-data'>
+  <table>
+    <tr>
+      <td>Upload a database file</td>
+      <td><input type='file' name='file'></td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td><?php $other_attributes = array( 'value' => 'Submit' ); submit_button('Upload database (*.shi)','submit','but_submit',true,$other_attributes); ?></td>
+    </tr>
+  </table>
+</form>
+  </div>
+<?php
+//<input type='submit' name='but_submit' value='Submit'>
 //print_r($categories);print('</BR></BR>');
 //print_r($competitors);
 

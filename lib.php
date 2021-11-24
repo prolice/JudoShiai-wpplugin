@@ -2,16 +2,29 @@
 
 require_once 'config.php';
 
+function dbConnectionSqlite($dbname){
+	if (file_exists($dbname))
+		$db = new PDO('sqlite:'.$dbname);
+	else $db = false;
+	
+	return $db;	
+}
+
 
 function sqlite_getInfo($db) {
   $result = new \stdClass;
   /*$result->Competition = $db->exec("SELECT value FROM info WHERE item=='Competition'");
   $result->Date = $db->exec("SELECT value FROM info WHERE item=='Date'");
   $result->Place = $db->exec("SELECT value FROM info WHERE item=='Place'");*/
-
-  $result->Competition = $db->query("SELECT value FROM info WHERE item ='Competition'")->fetch();
-  $result->Date = $db->query("SELECT value FROM info WHERE item ='Date'")->fetch();
-  $result->Place = $db->query("SELECT value FROM info WHERE item ='Place'")->fetch();
+  if ($isSqlExec = $db->query("SELECT value FROM info WHERE item ='Competition'"))
+	$result->Competition = $isSqlExec->fetch();
+  else return false;
+  if ($isSqlExec = $db->query("SELECT value FROM info WHERE item ='Date'"))
+	$result->Date = $isSqlExec->fetch();
+  else return false;
+  if ($isSqlExec = $db->query("SELECT value FROM info WHERE item ='Place'"))	
+	$result->Place = $isSqlExec->fetch();
+  else return false;
 
   return $result;
 }

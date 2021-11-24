@@ -23,32 +23,68 @@ function judoshiai_signup_admin_link()
     );
 }
 
-//add_shortcode( ‘njengah_contact_form, ‘render_njengah_contact_form’);
-add_shortcode( 'judoshiai_competitor', 'render_judoshiai_competitor');
+add_shortcode( 'judoshiai_info', 'render_judoshiai_info');
 
-function render_judoshiai_competitor(){ 
+function render_judoshiai_info(){ 
 
-$judoShiaiTemplateFile = get_option('judoshiai_option_name');
-//print('sqlite:'.plugin_dir_path(__FILE__) .$judoShiaiTemplateFile);
+	$judoShiaiTemplateFile = get_option('judoshiai_option_name');
 
-$dbconn = new PDO('sqlite:'.plugin_dir_path(__FILE__) .$judoShiaiTemplateFile);
+	$dbconn = dbConnectionSqlite(plugin_dir_path(__FILE__) .'/databases/'. $judoShiaiTemplateFile);
 
-if ($dbconn)
-{
-	$row = sqlite_getInfo($dbconn);
-	$categories = sqlite_getCategories($dbconn);
+	if ($dbconn)
+	{
+		$row = sqlite_getInfo($dbconn);
+		//$categories = sqlite_getCategories($dbconn);
+	}
+	else 
+		print ('Connection to database failed!\n');
+
+	if ($row)
+		print('
+			<div class="wrap">
+				<h3>Competition name: '.$row->Competition[0].'</br>Date: '.$row->Date[0].'</br>Place: '.$row->Place[0].'</h3>
+				<p></p>
+			</div> 
+		');
+	else print('
+			<div class="wrap">
+				<h3 style="color:red">'.$judoShiaiTemplateFile.' not found !!</h3>
+				<p></p>
+			</div> 
+		');
+
 }
-else 
-	print ('Connection to database failed!\n');
 
-print('
-	<div class="wrap">
-		<h3>'.$row->Competition[0].' | '.$row->Date[0].' | '.$row->Place[0].'</h3>
-		<p></p>
-	</div> 
-');
+add_shortcode( 'judoshiai_competitors_full_list', 'render_judoshiai_competitors_full_list');
+function render_judoshiai_competitors_full_list(){ 
+
+	$judoShiaiTemplateFile = get_option('judoshiai_option_name');
+	$dbconn = dbConnectionSqlite(plugin_dir_path(__FILE__) .'/databases/'. $judoShiaiTemplateFile);
+
+	if ($dbconn){
+		$array_competitors = sqlite_getCompetitors($dbconn,"");
+	}
+	else 
+		print ('Connection to database failed!\n');
+
+	if ($array_competitors)
+	{
+		//print_r($array_competitors);
+		print('<table><th>Firstname</th><th>Lastname</th><th>Year of Birth</th><th>Category</th><th>Club</th></tr>');
+		foreach ($array_competitors as $competitor)
+		{
+			foreach ($competitor as $item);
+			  print_r('<td>'.$item.'</td>');
+			  
+			print('</tr>');
+			//print('<td>'.$competitor["firstName"].'</td><td>'.$competitor["lastName"].'</td><td>'.$competitor["yearOfBirth"].'</td><td>'.$competitor["category"].'</td><td>'.$competitor["club"].'</td>');
+		}
+		print('</table>');
+	}
 
 }
+
+
 
 function judoshiai_plugin_register_settings() {
 	add_option('judoshiai_option_name','default.shi');
@@ -56,32 +92,5 @@ function judoshiai_plugin_register_settings() {
 }
 
 add_action('admin_init', 'judoshiai_plugin_register_settings');
-
-/*function judoshiai_register_options_page() {
-  add_options_page('Judoshiai Options', 'Judoshiai', 'manage_options', 'judoshiai-signup', 'judoshiai_options_page');
-}
-add_action('admin_menu', 'judoshiai_register_options_page');
-
-
-function judoshiai_options_page()
-{
-?>
-  <div>
-  <?php screen_icon(); ?>
-  <h2>JudoShiai Settings</h2>
-  <form method="post" action="options.php">
-  <?php settings_fields( 'judoshiai_plugin_options' ); ?>
-  <p>Set your database:</p>
-  <table>
-  <tr valign="top">
-  <th scope="row"><label for="judoshiai_option_name">Database filename (have to be uploaded by hand) [*.shi]: </label></th>
-  <td><input type="text" id="judoshiai_option_name" name="judoshiai_option_name" value="<?php echo get_option('judoshiai_option_name'); ?>" /></td>
-  </tr>
-  </table>
-  <?php  submit_button(); ?>
-  </form>
-  </div>
-<?php
-}*/
 
 ?>
