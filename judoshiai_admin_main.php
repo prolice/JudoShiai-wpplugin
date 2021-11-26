@@ -18,9 +18,8 @@ $dbconn = dbConnectionSqlite(plugin_dir_path(__FILE__) . '/databases/'. $judoShi
 
 if ($dbconn)
 {
-
 	$row = sqlite_getInfo($dbconn);
-	//$categories = sqlite_getCategories($dbconn);
+	$categories = sqlite_getCategories($dbconn);
 	//$competitors = sqlite_getCompetitors($dbconn, 'christophe@van-beneden.com');
 	if ($row)
 	print('
@@ -35,6 +34,9 @@ if ($dbconn)
 			<p></p>
 		</div> 
 	');
+	
+	/*if ($categories)
+		print_r($categories);*/
 }
 else 
 	print ('<pre><p style="color:red">Connection to database failed!</p></pre>');
@@ -71,6 +73,14 @@ else
 
 		?>
 	</select>
+	<?php 
+		$filename = plugin_dir_path(__FILE__) . 'databases/'.get_option('judoshiai_option_name');
+		/*if (unlink($filename)){
+			echo 'The file ' . $filename . ' was deleted successfully!';
+		} else {
+			echo 'There was a error deleting the file ' . $filename;
+		}*/
+	?>
   </td>
   </tr>
   <tr valign="top">

@@ -33,27 +33,29 @@ function sqlite_getCategories($db) {
   $male = array();
   $female = array();
   $queryResults = $db->query("SELECT age, agetext, flags, weight, weighttext FROM catdef");
-  while ($row = $queryResults->fetch()) {
-    $map = &$female;
-    $sex = "f";
-    if ($row['flags'] == 1) {
-      $map = &$male;
-      $sex = "m";
-    }
-    $age = $row['age'];
-    if ((isset($map[$age])) && (($cat = $map[$age]) != NULL)) {
-      $cat->weights[] = $row['weight'];
-      $cat->weightTexts[] = $row['weighttext'];
-    } else {
-      $cat = new \stdClass;
-      $cat->age = $age;
-      $cat->agetext = $row['agetext'];
-      $cat->sex = $sex;
-      $cat->weights = array($row['weight']);
-      $cat->weightTexts = array($row['weighttext']);
-      $map[$age] = $cat;
-    }
-  }
+  if ($queryResults){
+     while ($row = $queryResults->fetch()) {
+		$map = &$female;
+		$sex = "f";
+		if ($row['flags'] == 1) {
+		  $map = &$male;
+		  $sex = "m";
+		}
+		$age = $row['age'];
+		if ((isset($map[$age])) && (($cat = $map[$age]) != NULL)) {
+		  $cat->weights[] = $row['weight'];
+		  $cat->weightTexts[] = $row['weighttext'];
+		} else {
+		  $cat = new \stdClass;
+		  $cat->age = $age;
+		  $cat->agetext = $row['agetext'];
+		  $cat->sex = $sex;
+		  $cat->weights = array($row['weight']);
+		  $cat->weightTexts = array($row['weighttext']);
+		  $map[$age] = $cat;
+		}
+	  }
+	}
   $result = new \stdClass;
   $result->male = $male;
   $result->female = $female;

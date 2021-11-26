@@ -1,7 +1,8 @@
 <?php
 
-require_once plugin_dir_path(__FILE__) .'config.php';
+//require_once plugin_dir_path(__FILE__) .'config.php';
 require plugin_dir_path(__FILE__) . 'lib.php';
+
 /*
  * Add my new menu to the Admin Control Panel
  */
@@ -48,7 +49,6 @@ function render_judoshiai_info(){
 				<p></p>
 			</div> 
 		';
-		$yearOfTournament = date('Y', $dateOfTournamentDate);
 	}	
 	else $result = '
 			<div class="wrap">
@@ -64,29 +64,49 @@ function render_judoshiai_info(){
 add_shortcode( 'judoshiai_competitor_add', 'render_judoshiai_competitor_add');
 
 function render_judoshiai_competitor_add(){ 
-
+	
+	 if ( isset( $_POST['add_competitor'] ) ) {
+        $post = array(
+            'post_content' => $_POST['content'], 
+            'post_title'   => $_POST['title']
+        );
+        $id = wp_insert_post( $post, $wp_error );
+		
+		echo "The submit button is pressed and has data";
+        var_dump($_POST);
+    }
+	
+	$user_id = get_current_user_id();
+	print('User ID: '.$user_id.'</BR>');
+	if ($user_id == 0) return 'You are currently not logged in.</BR>';
 	//$judoShiaiTemplateFile = get_option('judoshiai_option_name');
 	$minYearOfBirth = get_option('judoshiai_option_minYearOfBirth');
 	$maxYearOfBirth = get_option('judoshiai_option_maxYearOfBirth');
-	//$yearOfTournament = 2022;
-	//$dbconn = dbConnectionSqlite(plugin_dir_path(__FILE__) .'/databases/'. $judoShiaiTemplateFile);
-    
+	$yearOfTournament = '';
+	$judoShiaiTemplateFile = get_option('judoshiai_option_name');
+	$dbconn = dbConnectionSqlite(plugin_dir_path(__FILE__) .'/databases/'. $judoShiaiTemplateFile);
+	$row = sqlite_getInfo($dbconn);
+	if ($row){
+		//print(date_create_from_format('d-m-Y', $row->Date[0]));
+		$yearOfTournament = date_create_from_format('d-m-Y', $row->Date[0])->format('Y');
+		//print($row->Date[0] . '|'.date("Y",date_create_from_format('d-m-Y', $row->Date[0])).'</BR>');
+	}
+	
+	$categories = sqlite_getCategories($dbconn);
 	$result = '
-		<p>$yearOfTournament</p>
+		<form method="post" action="" name="add_competitor_form" enctype="multipart/form-data">
 		<div class="row">
-            <div class="col-md form-group"><label for="input_firstName">Firstname</label><input required name="firstName" id="input_firstName" type="text" class="form-control"></div>
-            <div class="col-md form-group"><label for="input_lastName">Lastname</label><input required name="lastName" id="input_lastName" type="text" class="form-control"></div>
+            <div class="col-md form-group"><label for="input_firstName">Firstname</label><input style="background: #800606;" required name="firstName" id="input_firstName" type="text" class="form-control"></div>
+            <div class="col-md form-group"><label for="input_lastName">Lastname</label><input style="background: #800606;" required name="lastName" id="input_lastName" type="text" class="form-control"></div>
         </div>
 		<div class="row" style="display:flex;">
             <fieldset class="col-md form-group">
               <legend class="label">Sex</legend>
               <div id="btn_group_sex" class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
-                <label style="display:inline-block;margin-bottom:.5rem;font-size:1rem;" class="btn btn-outline-primary active w-100" for="input_male">
-                  <input style="-moz-appearance: textfield;-webkit-appearance: none;margin: 0;" type="radio" name="sex" id="input_male" value="m" checked="" autocomplete="off">male
-                </label>
-                <label style="display:inline-block;margin-bottom:.5rem;font-size:1rem;" class="btn btn-outline-primary w-100" for="input_female">
-                  <input style="-moz-appearance: textfield;-webkit-appearance: none;margin: 0;" type="radio" name="sex" id="input_female" value="f" autocomplete="off">female
-                </label>
+                <select style="background: #800606;" name="sex" id="select_sex">
+				  <option value="m" id="input_male">male</option>
+				  <option value="f" id="input_female">female</option>
+				</select>
               </div>
             </fieldset>
             <div class="col-md form-group">
@@ -106,7 +126,7 @@ function render_judoshiai_competitor_add(){
               <input id="labelAgeCat" type="text" readonly class="form-control-plaintext" value="">
             </div>
             <div class="col-md form-group"><label for="input_weight"><?php echo(_("Weight Category")); ?></label>
-              <select name="weight" id="input_weight" class="form-control" <?php echo($attributesInputWeight)?>>
+              <select style="background: #800606;" name="weight" id="input_weight" class="form-control" <?php echo($attributesInputWeight)?>>
                 <option value="" selected disabled><?php echo(_("Select year of birth and sex first.")); ?></option>
               </select>
             </div>
@@ -115,13 +135,25 @@ function render_judoshiai_competitor_add(){
 		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 		<script>
+		var categories ='.json_encode($categories).';
 		var category = "";
+		
+	function getFormData($form) {
+      var unindexed_array = $form.serializeArray();
+      var indexed_array = {};
+      $.map(unindexed_array, function (n, i) {
+        indexed_array[n["name"]] = n["value"];
+      });
+      return indexed_array;
+    }
+	
     function updateWeights(e) {
       var newcategory = "";
       var weights = null;
-      var sex = $(\'input[name=sex]:checked\').val();
+	  var yearOfTournament = 2022;
+      var sex = $(\'select[name=sex]\').val();
       var yearOfBirth = $(\'input[name=yearOfBirth]\').val();
-      var age = yearOfTournament - yearOfBirth;
+	  var age = yearOfTournament - yearOfBirth;
       if (sex === "m") {
         var sexCategories = categories.male;
         //    $("#test-output").text(function(i,text){return text + "♂"});
@@ -132,7 +164,7 @@ function render_judoshiai_competitor_add(){
       }
       //XXX This code assumes, that the categories within categories.male and categories.female are in ascending order by their max age.
       for (var cat in sexCategories) {
-        if (age <= cat) {
+        if (age < cat) {
           //      $("#test-output").text(function(i,text){return text + cat});
           var newcategory = sexCategories[cat].agetext;
           weights = sexCategories[cat].weights;
@@ -197,7 +229,7 @@ function render_judoshiai_competitor_add(){
       }
     });
 
-    $("input[name=\'sex\']").change(updateWeights);
+    $("select[name=\'sex\']").change(updateWeights);
     $("input[name=\'yearOfBirth\']").change(updateWeights);
     updateWeights();
 
@@ -209,6 +241,8 @@ function render_judoshiai_competitor_add(){
       showObj.focus();
     }
 		</script>
+	<input type="submit" value="+ ADD COMPETITOR" name="add_competitor">
+	</form>
 		';
 	
 	return $result;
@@ -234,8 +268,8 @@ function render_judoshiai_competitors_full_list($atts =[], $content = null, $tag
 	
 	$user_id = get_current_user_id();
 	if ($wporg_atts['coach_id']	!= 'ALL' && $user_id != 0) $wporg_atts['coach_id'] = $user_id;
-	else if ($wporg_atts['coach_id'] != 'ALL' && $user_id == 0) return 'You are currently not logged in.';
-		
+	else if ($wporg_atts['coach_id'] != 'ALL' && $user_id == 0) return 'You are currently not logged in.</BR>';
+
 	$result=''; 	
 	if ($dbconn){
 		$array_competitors = sqlite_getCompetitors($dbconn,$wporg_atts['coach_id']);
@@ -244,11 +278,13 @@ function render_judoshiai_competitors_full_list($atts =[], $content = null, $tag
 		$result = 'Connection to database failed!';
 		return $result;
 	}
+    $userMetaData = get_user_meta( $user_id );
+	$result = 'Your club: '.$userMetaData["description"][0].'</br>'; 
 
 	if ($array_competitors)
 	{
 		//print_r($array_competitors);
-		$result = '<table><thead><tr><th>'.$wporg_atts['title'].'</th></tr><tr><th>Firstname</th><th>Lastname</th><th>Year of Birth</th><th>Category</th><th>Club</th></tr></thead>';
+		$result = $result . '<table><thead><tr><th>'.$wporg_atts['title'].'</th></tr><tr><th>Firstname</th><th>Lastname</th><th>Year of Birth</th><th>Category</th><th>Club</th></tr></thead>';
 		foreach ($array_competitors as $competitor)
 		{
 			$result = $result.'<tbody><tr>';
