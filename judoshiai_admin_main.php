@@ -71,7 +71,18 @@ else
 
 		?>
 	</select>
-  
+  </td>
+  </tr>
+  <tr valign="top">
+  <th scope="row"><label for="judoshiai_option_minYearOfBirth">Minimum Year of Birth: </label></th>
+  <td>
+	<input name="judoshiai_option_minYearOfBirth" id="judoshiai_option_minYearOfBirth" value="<?php print(get_option('judoshiai_option_minYearOfBirth'));?>"></input>
+  </td>
+  </tr>
+  <tr valign="top">
+  <th scope="row"><label for="judoshiai_option_maxYearOfBirth">Maximum Year of Birth: </label></th>
+  <td>
+	<input name="judoshiai_option_maxYearOfBirth" id="judoshiai_option_maxYearOfBirth" value="<?php print(get_option('judoshiai_option_maxYearOfBirth'));?>"></input>
   </td>
   </tr>
   </table>
@@ -119,7 +130,14 @@ if(isset($_POST['but_submit'])){
     </tr>
   </table>
 </form>
+<table>
+    <tr>
+      <td>Get Your Database File Back</td>
+      <td><a href="<?php echo plugin_dir_url(__FILE__) . 'databases/'.get_option('judoshiai_option_name'); ?>">Download...</a></td>
+    </tr>
+  </table>
   </div>
+  
 <?php
 //<input type='submit' name='but_submit' value='Submit'>
 //print_r($categories);print('</BR></BR>');

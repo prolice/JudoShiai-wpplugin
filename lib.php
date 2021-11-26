@@ -63,7 +63,10 @@ function sqlite_getCategories($db) {
 function sqlite_getCompetitors($db, $coachid) {
   $results = array();
   $indices = array("firstName", "lastName", "yearOfBirth", "sex", "weight", "category", "club", "coachid");
-  $queryResults = $db->query("SELECT first, last, birthyear, deleted, weight, regcategory, club, coachid FROM competitors");
+  $sql = "SELECT first, last, birthyear, deleted, weight, regcategory, club, coachid FROM competitors";
+  if ($coachid != 'ALL')
+		$sql = $sql . " where coachid = '".$coachid."'";
+  $queryResults = $db->query($sql);
   while ($row = $queryResults->fetch()) {
     $competitor = new \stdClass;
     foreach ($row as $k => $content) {
